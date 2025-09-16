@@ -13,12 +13,17 @@
 ```bash
 git clone https://github.com/yourname/your-repo.git
 cd your-repo
+```
 
 2.安裝相依套件：
+```bash
 pip install -r requirements.txt
+```
 
 3.啟動伺服器：
+```bash
 python server.py
+```
 
 4.開啟瀏覽器
 在網址列輸入：http://127.0.0.1:5000/
