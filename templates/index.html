@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube 音樂下載器</title>
+    <!-- 使用 Tailwind CSS 載入以方便樣式設定 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            transition: background-color 0.3s ease;
+        }
+        .bg-card {
+            background-color: #ffffff;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .button-primary {
+            background-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .button-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+        .input-style {
+            transition: box-shadow 0.2s, border-color 0.2s;
+        }
+        .input-style:focus {
+            outline: none;
+            border-color: #4a90e2;
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+        }
+        /* 新增自定義下拉式選單樣式 */
+        .select-style {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1.5rem 1.5rem;
+            padding-right: 2.5rem; /* 確保箭頭有足夠空間 */
+        }
+        .button-danger {
+            background-color: #ef4444;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .button-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+        }
+        .button-secondary {
+            border: 2px solid #9ca3af;
+            color: #4b5563;
+            transition: transform 0.2s, background-color 0.2s;
+        }
+        .button-secondary:hover {
+            transform: translateY(-2px);
+            background-color: #e5e7eb;
+            box-shadow: 0 8px 25px rgba(156, 163, 175, 0.4);
+        }
+
+        /* 新增提示框樣式 */
+        .alert {
+            padding: 1rem;
+            border-radius: 0.75rem;
+            font-weight: 500;
+            margin-top: 0.5rem;
+        }
+        .alert-success {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        .alert-error {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+        /* 更新警示框樣式 */
+        .alert-warning {
+            background-color: #fef9c3;
+            color: #854d0e;
+        }
+        .alert-info {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+
+        /* 新增待下載清單項目樣式 */
+        .pending-list-item {
+            background-color: #e2f4ff; /* 淺藍色 */
+            border: 1px solid #b6dcfb; /* 藍色邊框 */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .pending-list-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.08);
+        }
+        /* 新增已下載清單項目樣式 */
+        .downloaded-list-item {
+            background-color: #d1fae5; /* 淺綠色 */
+            border: 1px solid #a7f3d0; /* 綠色邊框 */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .downloaded-list-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        /* 針對移除按鈕的自訂樣式 */
+        .remove-task-btn-style {
+            background-color: #e5e7eb;
+            color: #6b7280;
+            width: 2rem; /* 固定寬度為 32px */
+            height: 2rem; /* 固定高度為 32px */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 9999px; /* 圓形 */
+            transition: background-color 0.2s;
+            outline: none;
+            position: relative;
+        }
+        .remove-task-btn-style:hover {
+            background-color: #d1d5db;
+        }
+        .remove-task-btn-style:focus {
+            box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.5);
+        }
+
+        /* 夜間模式樣式 */
+        body.dark-mode {
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+        .dark-mode .bg-card {
+            background-color: #1e1e1e;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+        .dark-mode .text-gray-800 {
+            color: #e0e0e0;
+        }
+        .dark-mode .text-gray-700 {
+            color: #c2c2c2;
+        }
+        .dark-mode .text-gray-500 {
+            color: #a0a0a0;
+        }
+        .dark-mode .input-style {
+            background-color: #2c2c2c;
+            border-color: #444;
+            color: #e0e0e0;
+        }
+        .dark-mode .input-style::placeholder {
+            color: #888;
+        }
+        .dark-mode .bg-gray-50 {
+            background-color: #2c2c2c;
+        }
+        .dark-mode .bg-gray-200 {
+            background-color: #444;
+        }
+        .dark-mode .bg-gray-200:hover {
+            background-color: #555;
+        }
+        .dark-mode .text-gray-600 {
+            color: #a0a0a0;
+        }
+        .dark-mode .text-gray-400 {
+            color: #777;
+        }
+        /* 針對待下載清單項目新增夜間模式樣式 */
+        .dark-mode .pending-list-item {
+            background-color: #2a3442;
+            border-color: #3e4d61;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        .dark-mode .pending-list-item:hover {
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.4);
+        }
+        /* 針對已下載清單項目新增夜間模式樣式 */
+        .dark-mode .downloaded-list-item {
+            background-color: #1e3a2c;
+            border-color: #2f5c44;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        .dark-mode .downloaded-list-item:hover {
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.4);
+        }
+        .dark-mode .select-style {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23a0a0a0' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3csvg%3e");
+        }
+        /* 夜間模式提示框樣式 */
+        .dark-mode .alert-success {
+            background-color: #064e3b;
+            color: #a7f3d0;
+        }
+        .dark-mode .alert-error {
+            background-color: #7f1d1d;
+            color: #fca5a5;
+        }
+        .dark-mode .alert-warning {
+            background-color: #78350f;
+            color: #fde68a;
+        }
+        .dark-mode .alert-info {
+            background-color: #1e3a8a;
+            color: #bfdbfe;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-6 md:p-12 dark-mode">
+
+    <!-- 夜間模式切換按鈕 -->
+    <button id="theme-toggle-btn" class="absolute top-6 right-6 md:top-12 md:right-12 p-3 rounded-full bg-white bg-opacity-70 backdrop-filter backdrop-blur-lg shadow-lg transition-colors duration-300">
+        <svg id="moon-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-800 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+        </svg>
+        <svg id="sun-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+    </button>
+
+    <div class="w-full max-w-7xl text-center mb-8">
+        <h1 class="text-4xl md:text-5xl font-extrabold text-gray-800 tracking-tight">
+            YouTube 音樂下載器
+        </h1>
+        <p class="text-lg text-gray-500 mt-2">
+            輕鬆將您喜愛的 YouTube 影片轉換成音樂檔案
+        </p>
+    </div>
+
+    <!-- 主要內容區塊：分為三欄 -->
+    <div class="w-full max-w-7xl grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- 左側區塊：輸入表單 -->
+        <div class="md:col-span-1 flex-shrink-0">
+            <div class="bg-card p-6 md:p-8 rounded-2xl">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">新增下載任務</h2>
+                <div id="input-container" class="space-y-6">
+                    <div>
+                        <label for="url-0" class="block text-gray-700 font-semibold mb-2">YouTube 影片連結</label>
+                        <input type="url" id="url-0" name="url" placeholder="https://www.youtube.com/watch?v=..." required
+                               class="input-style w-full px-4 py-2 border border-gray-300 rounded-xl">
+                    </div>
+                    <div>
+                        <label for="filename-0" class="block text-gray-700 font-semibold mb-2">下載檔案名稱</label>
+                        <input type="text" id="filename-0" name="filename" placeholder="歌曲名稱" required
+                               class="input-style w-full px-4 py-2 border border-gray-300 rounded-xl">
+                    </div>
+                    <div>
+                        <label for="style-0" class="block text-gray-700 font-semibold mb-2">歌曲風格</label>
+                        <select id="style-0" name="style"
+                                class="input-style select-style w-full px-4 py-2 border border-gray-300 rounded-xl cursor-pointer">
+                            <option value="無">無</option>
+                            <option value="運動">運動</option>
+                            <option value="搖滾">搖滾</option>
+                            <option value="抒情">抒情</option>
+                            <option value="放鬆">放鬆</option>
+                            <option value="睡眠">睡眠</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="speed-0" class="block text-gray-700 font-semibold mb-2">播放速度 (倍)</label>
+                        <input type="number" id="speed-0" name="speed" value="1.0" step="0.1" min="0.1" required
+                               class="input-style w-full px-4 py-2 border border-gray-300 rounded-xl">
+                    </div>
+                </div>
+                <button id="add-to-list-btn" type="button" class="w-full text-blue-600 font-bold py-3 px-6 mt-6 rounded-xl border border-blue-600 hover:bg-blue-600 hover:text-white transition-colors duration-300">
+                    新增至下載清單
+                </button>
+            </div>
+        </div>
+
+        <!-- 中間區塊：待下載清單與已下載清單 -->
+        <div class="md:col-span-1 flex-shrink-0 space-y-8">
+            <!-- 待下載清單區塊 -->
+            <div class="bg-card p-6 md:p-8 rounded-2xl">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">待下載清單</h2>
+                    <!-- 匯入按鈕 -->
+                    <label for="import-file-input" class="button-secondary font-bold py-2 px-4 rounded-xl text-sm cursor-pointer shadow-md hover:shadow-xl transform transition-all duration-300">
+                        匯入TXT
+                    </label>
+                    <input type="file" id="import-file-input" class="hidden" accept=".txt">
+                </div>
+                <!-- 調整清單區塊為可捲動 -->
+                <div id="pending-list" class="bg-gray-50 p-4 rounded-xl text-gray-700 space-y-4 max-h-96 overflow-y-auto">
+                    <!-- 待下載任務將在此處顯示 -->
+                    <p class="text-center text-gray-400">清單為空</p>
+                </div>
+                <div class="flex flex-col md:flex-row gap-4 mt-6">
+                    <button id="download-btn" type="button" class="button-primary flex-1 text-white font-bold py-3 px-6 rounded-xl text-lg shadow-md hover:shadow-xl transform transition-all duration-300">
+                        一次下載所有音樂
+                    </button>
+                </div>
+            </div>
+
+            <!-- 清單管理區塊：新增匯出按鈕 -->
+            <div class="bg-card p-6 md:p-8 rounded-2xl">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">清單管理</h2>
+                <div class="flex flex-col md:flex-row gap-4">
+                    <!-- 匯出按鈕移到這個新區塊 -->
+                    <button id="export-txt-btn" type="button" class="button-secondary flex-1 font-bold py-3 px-6 rounded-xl text-lg shadow-md hover:shadow-xl transform transition-all duration-300">
+                        下載所有清單為TXT
+                    </button>
+                </div>
+            </div>
+
+            <!-- 已下載清單區塊 -->
+            <div class="bg-card p-6 md:p-8 rounded-2xl">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">已下載清單</h2>
+                <div id="downloaded-list" class="bg-gray-50 p-4 rounded-xl text-gray-700 max-h-64 overflow-y-auto space-y-3 mb-6">
+                    <p class="text-center text-gray-400">尚無已下載的歌曲</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右側區塊：事件紀錄 -->
+        <div class="md:col-span-1 flex-shrink-0">
+            <div class="bg-card p-6 md:p-8 rounded-2xl h-full flex flex-col">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">事件紀錄</h2>
+                <div id="status-log" class="bg-gray-50 p-4 rounded-xl text-gray-700 overflow-y-auto space-y-2 flex-grow">
+                    <div class="alert alert-info">
+                        <p class="text-sm text-center">準備就緒...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const urlInput = document.getElementById('url-0');
+        const filenameInput = document.getElementById('filename-0');
+        const styleSelect = document.getElementById('style-0');
+        const speedInput = document.getElementById('speed-0');
+        const addToPendingListBtn = document.getElementById('add-to-list-btn');
+        let downloadBtn = document.getElementById('download-btn');
+        const exportTxtBtn = document.getElementById('export-txt-btn');
+        const importFileInput = document.getElementById('import-file-input');
+        const pendingList = document.getElementById('pending-list');
+        const downloadedList = document.getElementById('downloaded-list');
+        const statusLog = document.getElementById('status-log');
+        const themeToggleBtn = document.getElementById('theme-toggle-btn');
+        const moonIcon = document.getElementById('moon-icon');
+        const sunIcon = document.getElementById('sun-icon');
+
+        // 設定後端伺服器的 URL
+        const SERVER_URL = 'http://127.0.0.1:5000';
+
+        // 任務清單現在分為待下載和已下載兩部分
+        const pendingTasks = [];
+        const downloadedTasks = [];
+        let shouldCancel = false;
+
+        // 函式用於將訊息加入狀態紀錄區
+        function addLog(message, type = 'info') {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const timestamp = `[${hours}:${minutes}:${seconds}]`;
+
+            const logItem = document.createElement('div');
+            logItem.className = `alert alert-${type}`;
+
+            // 移除初始提示
+            if (statusLog.children.length > 0 && statusLog.children[0].textContent.includes('準備就緒')) {
+                 statusLog.innerHTML = '';
+            }
+
+            logItem.innerHTML = `<p class="text-sm"><span class="font-mono text-gray-500">${timestamp}</span> ${message}</p>`;
+            statusLog.prepend(logItem);
+        }
+
+        // 函式用於將待下載清單渲染到 UI
+        function renderPendingList() {
+            // 先清空所有舊的項目
+            pendingList.innerHTML = '';
+
+            if (pendingTasks.length === 0) {
+                const emptyPara = document.createElement('p');
+                emptyPara.className = 'text-center text-gray-400';
+                emptyPara.textContent = '清單為空';
+                pendingList.appendChild(emptyPara);
+                return;
+            }
+
+            // 遍歷所有任務並重新渲染
+            pendingTasks.forEach((task, index) => {
+                const taskItem = document.createElement('div');
+                // 使用新的 pending-list-item class 來處理夜間模式樣式
+                taskItem.className = 'pending-list-item flex items-center justify-between p-4 rounded-xl shadow-sm border';
+                taskItem.innerHTML = `
+                    <div class="truncate pr-4">
+                        <div class="font-bold text-gray-800">${task.filename}</div>
+                        <div class="text-sm text-gray-400 truncate">${task.url}</div>
+                        <div class="text-xs font-semibold text-red-500 opacity-60">速度: ${task.speed}x</div>
+                    </div>
+                    <!-- 新的移除按鈕，使用純文字 &times; 並套用自訂樣式 -->
+                    <button class="remove-task-btn-style flex-shrink-0" data-index="${index}">
+                        &times;
+                    </button>
+                `;
+                pendingList.appendChild(taskItem);
+
+                // 為每個移除按鈕添加事件監聽器
+                const removeBtn = taskItem.querySelector('.remove-task-btn-style');
+                removeBtn.addEventListener('click', (e) => {
+                    const removeIndex = parseInt(e.currentTarget.dataset.index, 10);
+                    pendingTasks.splice(removeIndex, 1);
+                    renderPendingList(); // 重新渲染清單
+                });
+            });
+        }
+
+        // 函式用於將已下載歌曲加入清單
+        function addDownloadedItemToUI(task) {
+            downloadedTasks.unshift(task);
+
+            const downloadedItem = document.createElement('div');
+            downloadedItem.className = 'downloaded-list-item p-4 rounded-xl shadow-sm border flex items-center justify-between';
+            downloadedItem.innerHTML = `
+                <div class="truncate pr-4">
+                    <div class="font-bold text-gray-800">${task.filename}</div>
+                    <div class="text-sm text-gray-400 truncate">${task.url}</div>
+                </div>
+            `;
+            // 如果清單是空的，移除提示文字
+            if (downloadedList.children.length === 1 && downloadedList.children[0].textContent === '尚無已下載的歌曲') {
+                downloadedList.innerHTML = '';
+            }
+            downloadedList.prepend(downloadedItem);
+        }
+
+        async function startDownload() {
+            if (pendingTasks.length === 0) {
+                addLog('下載清單為空，請先新增任務。', 'warning');
+                return;
+            }
+
+            // 動態切換按鈕為「取消下載」
+            const originalBtn = downloadBtn;
+            const newBtn = document.createElement('button');
+            newBtn.id = 'cancel-btn';
+            newBtn.type = 'button';
+            newBtn.className = 'button-danger flex-1 text-white font-bold py-3 px-6 rounded-xl text-lg shadow-md hover:shadow-xl transform transition-all duration-300';
+            newBtn.textContent = '取消下載';
+            originalBtn.parentNode.replaceChild(newBtn, originalBtn);
+            downloadBtn = newBtn;
+
+            shouldCancel = false;
+            let currentTaskIndex = 0;
+
+            const downloadLoop = async () => {
+                while (pendingTasks.length > 0 && !shouldCancel) {
+                    const task = pendingTasks[0];
+                    addLog(`正在下載第 ${currentTaskIndex + 1} 首歌曲: "${task.filename}"...`, 'info');
+
+                    try {
+                        const response = await fetch(`${SERVER_URL}/download_to_server`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(task),
+                        });
+
+                        const result = await response.json();
+
+                        if (response.ok) {
+                            // 下載成功，從清單中移除第一個任務
+                            pendingTasks.shift();
+                            renderPendingList();
+                            // 新增歌曲到已下載清單
+                            addDownloadedItemToUI(task);
+                            addLog(`成功下載: "${task.filename}"`, 'success');
+                            currentTaskIndex++;
+                        } else {
+                            addLog(`處理 "${task.filename}" 時發生錯誤: ${result.error}`, 'error');
+                            pendingTasks.shift();
+                            renderPendingList();
+                        }
+                    } catch (error) {
+                        console.error('下載請求失敗:', error);
+                        addLog(`無法連線至伺服器或發生錯誤：${error.message}`, 'error');
+                        pendingTasks.shift();
+                        renderPendingList();
+                    }
+                }
+
+                // 下載完成或被取消後，恢復按鈕狀態
+                const finalBtn = document.createElement('button');
+                finalBtn.id = 'download-btn';
+                finalBtn.type = 'button';
+                finalBtn.className = 'button-primary flex-1 text-white font-bold py-3 px-6 rounded-xl text-lg shadow-md hover:shadow-xl transform transition-all duration-300';
+                finalBtn.textContent = '一次下載所有音樂';
+                downloadBtn.parentNode.replaceChild(finalBtn, downloadBtn);
+                downloadBtn = finalBtn;
+
+                downloadBtn.addEventListener('click', startDownload);
+
+                if (shouldCancel) {
+                     addLog('下載已取消。', 'info');
+                } else if (pendingTasks.length === 0) {
+                     addLog('所有下載任務已完成！', 'success');
+                }
+            };
+
+            // 監聽取消按鈕
+            newBtn.addEventListener('click', () => {
+                shouldCancel = true;
+            }, { once: true });
+
+            downloadLoop();
+        }
+
+        addToPendingListBtn.addEventListener('click', () => {
+            const url = urlInput.value.trim();
+            const filename = filenameInput.value.trim();
+            const style = styleSelect.value.trim();
+            const speed = parseFloat(speedInput.value);
+
+            if (!url || !filename) {
+                addLog('請輸入有效的影片連結和檔案名稱。', 'error');
+                return;
+            }
+
+            const finalFilename = style && style !== '無' ? `[${style}] ${filename}` : filename;
+
+            const newTask = {
+                url,
+                filename: finalFilename,
+                speed
+            };
+
+            pendingTasks.unshift(newTask);
+
+            renderPendingList(); // 新增任務後立即重新渲染清單
+            addLog(`已新增歌曲: "${finalFilename}" 至清單`, 'info');
+
+            // 清空輸入框
+            urlInput.value = '';
+            filenameInput.value = '';
+            styleSelect.value = '無';
+            speedInput.value = '1.0';
+        });
+
+        // 下載 TXT 檔案的事件處理函式，現在包含兩個清單
+        exportTxtBtn.addEventListener('click', () => {
+            const combinedTasks = [...pendingTasks, ...downloadedTasks]; // 合併兩個清單的任務
+
+            if (combinedTasks.length === 0) {
+                addLog('下載清單和已下載清單都為空，無法匯出。', 'warning');
+                return;
+            }
+
+            // 根據指定的格式組裝文字內容
+            const txtContent = combinedTasks.map(task => {
+                return `${task.speed},${task.filename},${task.url}`;
+            }).join('\n');
+
+            // 建立一個 Blob 物件
+            const blob = new Blob([txtContent], { type: 'text/plain;charset=utf-8' });
+
+            // 建立一個暫時的下載連結
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '所有下載任務.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url); // 釋放物件 URL
+
+            addLog('所有清單任務已匯出為 TXT 檔案。', 'success');
+        });
+
+        // 匯入 TXT 檔案的事件處理函式
+        importFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) {
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const content = event.target.result;
+                const lines = content.split('\n').filter(line => line.trim() !== '');
+
+                let newTasksAdded = 0;
+                lines.forEach(line => {
+                    const parts = line.split(',');
+                    // 檢查格式是否正確
+                    if (parts.length === 3) {
+                        const [speedStr, filename, url] = parts;
+                        const speed = parseFloat(speedStr);
+                        // 檢查速度是否為有效數字
+                        if (!isNaN(speed) && url.startsWith('http')) {
+                            const newTask = {
+                                url: url.trim(),
+                                filename: filename.trim(),
+                                speed: speed
+                            };
+                            pendingTasks.unshift(newTask);
+                            newTasksAdded++;
+                        }
+                    }
+                });
+
+                if (newTasksAdded > 0) {
+                    renderPendingList();
+                    addLog(`已成功匯入 ${newTasksAdded} 個任務至清單。`, 'success');
+                } else {
+                    addLog('匯入失敗，請確認檔案格式是否正確 (速度,檔名,網址)。', 'error');
+                }
+
+                // 清空檔案輸入，以便可以再次選擇相同的檔案
+                e.target.value = '';
+            };
+            reader.readAsText(file);
+        });
+
+        // 為下載按鈕綁定事件
+        downloadBtn.addEventListener('click', startDownload);
+
+        themeToggleBtn.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            if (document.body.classList.contains('dark-mode')) {
+                moonIcon.classList.add('hidden');
+                sunIcon.classList.remove('hidden');
+            } else {
+                moonIcon.classList.remove('hidden');
+                sunIcon.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

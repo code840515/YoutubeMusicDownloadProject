@@ -1,0 +1,11 @@
+{
+  "python.defaultInterpreterPath": "D:\\code\\python-venv\\youtube-venv\\Scripts\\python.exe",
+  "python.terminal.activateEnvironment": true,
+  "terminal.integrated.profiles.windows": {
+    "Youtube CMD": {
+      "path": "C:\\Windows\\System32\\cmd.exe",
+      "args": ["/k", "D:\\code\\python-venv\\youtube-venv\\Scripts\\activate.bat"]
+    }
+  },
+  "terminal.integrated.defaultProfile.windows": "Youtube CMD"
+}
